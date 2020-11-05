@@ -16,6 +16,7 @@ s.listen()
 
 list_of_sockets = [s]
 clients = {}
+nodes = {}
 
 
 def recv(client_socket):
@@ -46,50 +47,49 @@ def server():
 
                 list_of_sockets.append(client_socket)
                 clients[client_socket] = user  # salvam username-ul in dict
+                nodes[user['data']] = client_socket
 
                 print(
                     f"Accepted new connection from {client_address[0]}:{client_address[1]} username:{user['data'].decode('utf-8')}")
 
             else:
                 # daca nu e notificat serverul de o conexiune noua, inseamna ca avem de citit un mesaj
+                node = recv(notified_socket)
                 message = recv(notified_socket)
+
                 # preiau mesajul
                 # daca nu exista...inseamna ca e deconectare
                 if message is False:
                     print(f"Closed Connection from {clients[notified_socket]['data'].decode('utf-8')}")
                     list_of_sockets.remove(notified_socket)
+                    del nodes[clients[notified_socket]['data']]
                     del clients[notified_socket]
                     continue
                 # daca totusi exista, ma uit sa vad de la cine e
                 user = clients[notified_socket]
-                print(f"Received message from {user['data'].decode('utf-8')}: {message['data'].decode('utf-8')}")
+                print(user['data'])
+                # print(f"Received message from {user['data'].decode('utf-8')}: {message['data'].decode('utf-8')}")
 
                 # dam mai departe informatii / comenzi
                 copies_of_clients = clients.copy()
                 del copies_of_clients[notified_socket]
-                #print(clients[notified_socket])
+                # print(clients[notified_socket])
+                # if user['data'].decode() == 'K':
+                #     nodes['A'.encode()].send(user['header'])
+                #     nodes['A'.encode()].send(user['data'])
+                #     nodes['A'.encode()].send(message['header'])
+                #     nodes['A'.encode()].send(message['data'])
+                #     nodes['B'.encode()].send(user['header'])
+                #     nodes['B'.encode()].send(user['data'])
+                #     nodes['B'.encode()].send(message['header'])
+                #     nodes['B'.encode()].send(message['data'])
+                # else:
+                nodes[node['data']].send(user['header'])
+                nodes[node['data']].send(user['data'])
+                nodes[node['data']].send(message['header'])
+                nodes[node['data']].send(message['data'])
 
-                for client_socket in copies_of_clients:
-                    if clients[notified_socket]['data'].decode('utf-8') == 'A' and message['data'].decode('utf-8')[0:3] == "[B]": #Mesaj A-B
-                        if copies_of_clients[client_socket]['data'].decode('utf-8') == 'B':
-                            client_socket.send(user['header'] + user['data'] + message['header'] + message['data'])
-                    elif clients[notified_socket]['data'].decode('utf-8') == 'A' and message['data'].decode('utf-8')[0:4] == "[KM]": #Mesaj A-KM
-                        if copies_of_clients[client_socket]['data'].decode('utf-8') == 'KM':
-                            client_socket.send(user['header'] + user['data'] + message['header'] + message['data'])
-                    elif clients[notified_socket]['data'].decode('utf-8') == 'B' and message['data'].decode('utf-8')[0:3] == "[A]": #Mesaj B-A
-                        if copies_of_clients[client_socket]['data'].decode('utf-8') == 'A':
-                            client_socket.send(user['header'] + user['data'] + message['header'] + message['data'])
-                    elif clients[notified_socket]['data'].decode('utf-8') == 'B' and message['data'].decode('utf-8')[0:4] == "[KM]": # Mesaj B-KM
-                        if copies_of_clients[client_socket]['data'].decode('utf-8') == 'KM':
-                            client_socket.send(user['header'] + user['data'] + message['header'] + message['data'])
-                    elif clients[notified_socket]['data'].decode('utf-8') == 'KM' and message['data'].decode('utf-8')[0:3] == "[A]": # Mesaj KM - A
-                        if copies_of_clients[client_socket]['data'].decode('utf-8') == 'A':
-                            client_socket.send(user['header'] + user['data'] + message['header'] + message['data'])
-                    elif clients[notified_socket]['data'].decode('utf-8') == 'KM' and message['data'].decode('utf-8')[0:3] == "[B]": # Mesaj KM - B
-                        if copies_of_clients[client_socket]['data'].decode('utf-8') == 'B':
-                            client_socket.send(user['header'] + user['data'] + message['header'] + message['data'])
-
-                    print(copies_of_clients[client_socket]['data'].decode('utf-8'))
+            # print(copies_of_clients[client_socket]['data'].decode('utf-8'))
 
 
 if __name__ == '__main__':
